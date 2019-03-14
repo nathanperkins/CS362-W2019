@@ -13,6 +13,7 @@ import java.util.ArrayList;
 public class UrlValidatorTestProject extends TestCase {
     static final String LOWER_CASE_CHARS = "abcdefghijklmnopqrstuvwxyz";
     static final String UPPER_CASE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static final String ALPHABET_CHARS   = LOWER_CASE_CHARS + UPPER_CASE_CHARS;
     static final String NUMERIC_CHARS = "0123456789";
 
     public UrlValidatorTestProject(String testName) {
@@ -49,7 +50,7 @@ public class UrlValidatorTestProject extends TestCase {
     private static String generateString(int length, String validChars, String invalidChars)
     {
         StringBuilder s = new StringBuilder();
-        double validRatio     = Math.pow(0.9, 1.0/length);
+        double validRatio     = Math.pow(0.95, 1.0/length);
 
         for (int i = 0; i < length; i++)
         {
@@ -79,19 +80,46 @@ public class UrlValidatorTestProject extends TestCase {
         String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS + "+-.";
         String invalidChars   = "~!@#$%^&*()_";
 
-        String item = generateString(length, validChars, invalidChars);
-        boolean valid = item == "" || item.matches("^[A-z]+[A-z0-9+\\-.]*$");
+        String item = generateString(length, validChars, invalidChars) + "://";
+        boolean valid = item == "" || item.matches("^[A-z]+[A-z0-9+\\-.]*://$");
 
         return new ResultPair(item, valid);
     }
 
+    private static ResultPair generateAuthority(int length)
+    /*
+    https://tools.ietf.org/html/rfc3986#section-3.2
+
+    authority   = [ userinfo "@" ] host [ ":" port ]
+
+    */
+    {
+        String validChars = ALPHABET_CHARS + NUMERIC_CHARS;
+        String invalidChars = "~!@#$%^&*()_+";
+
+        String host = generateString(length, validChars, invalidChars);
+        boolean hostValid = host.matches("^[A-z]+[A-z0-9.]*[A-z0-9]$");
+
+        String domain = generateString(3, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
+        boolean domainValid = domain.matches("^[A-z]+$");
+
+        String item = host + "." + domain;
+        boolean valid = hostValid && domainValid;
+        return new ResultPair(item, valid);
+    }
+
+    private static ResultPair generatePath(int length)
+    {
+        String validChars = ALPHABET_CHARS + NUMERIC_CHARS + "/";
+    }
+
     public void testRandom()
     {
-        ArrayList<ResultPair> schemes = new ArrayList<ResultPair>;
+        ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
         for (int i = 0; i < 1000; i++)
         {
-            int length = new Random().nextInt(10);
-            schemes.add(generateScheme(length));
+            ResultPair authority = generateAuthority(20);
+            System.out.println(authority.item + authority.valid);
         }
     }
 }
