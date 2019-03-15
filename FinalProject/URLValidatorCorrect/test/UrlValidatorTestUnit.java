@@ -21,7 +21,7 @@ public class UrlValidatorTestUnit extends TestCase {
 			//System.out.println("PASS: " + message);
 			return true;
 		}
-		//System.out.println("FAIL: " + message);
+		System.out.println("FAIL: " + message);
 		return false;
 	}
 	
@@ -33,18 +33,16 @@ public class UrlValidatorTestUnit extends TestCase {
 				new ResultPair("ftp://example.com", true),
 				new ResultPair("http://www.example.com:8080/foo/bar", true),
 				new ResultPair("http://www.example.com?foo=BaR", true),
-				new ResultPair("http://www.example.com/foo bar", true),
-				new ResultPair("http://www.yahoo/com", false),
+				new ResultPair("http://www.example.com/foo bar", false),
+				new ResultPair("http://www.yahoos/com", false),
 				new ResultPair("http://yahoo/com", false),
 				new ResultPair("http://www/yahoo/com", false),
-				new ResultPair("htp://www.yahoo.com", false),
 				new ResultPair("http://www.yahoo.com::", false),
 				new ResultPair("http://www.yahoo.com:://", false),
 				new ResultPair("http://sports.yahoo.com::/nba", false)
 		};
     	
         long options =
-                UrlValidator.ALLOW_2_SLASHES
                 + UrlValidator.ALLOW_ALL_SCHEMES;
 		UrlValidator urlVal = new UrlValidator(null, null, options);
 		boolean result = true;
@@ -71,7 +69,7 @@ public class UrlValidatorTestUnit extends TestCase {
     			new ResultPair("http://", true),
     			new ResultPair("https://", true),
     			new ResultPair("ftp://", true),
-    			new ResultPair("spotify://", false),
+    			new ResultPair("spotify://", true),
     			new ResultPair("http:/", false),
     			new ResultPair("://", false)
     	};
