@@ -100,7 +100,7 @@ public class UrlValidatorTestRandom extends TestCase {
         String invalidChars   = "~!@#$%^&*()_+-.";
 
         String item = generateString(length, validRatio, validChars, invalidChars) + "://";
-        boolean valid = !item.equals("://") || item.matches("^[A-Za-z]+[A-Za-z0-9+\\-.]*://$");
+        boolean valid = item.matches("^[A-Za-z]+[A-Za-z0-9+\\-.]*://$");
 
         return new ResultPair(item, valid);
     }
