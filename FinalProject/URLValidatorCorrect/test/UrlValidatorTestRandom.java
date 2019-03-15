@@ -95,7 +95,6 @@ public class UrlValidatorTestRandom extends TestCase {
     	if(length == 0) {
     		return new ResultPair("://", false);
     	}
-        //String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS + "+-.";
     	String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS;
         String invalidChars   = "~!@#$%^&*()_+-.";
 
@@ -127,19 +126,19 @@ public class UrlValidatorTestRandom extends TestCase {
     		new ResultPair("com", true),
     		new ResultPair("org", true),
     		new ResultPair("net", true),
-    		//new ResultPair("gov", true),
+    		new ResultPair("gov", true),
     		new ResultPair("dummy", false),
     		new ResultPair("invalid", false),
     		new ResultPair("asdf", false),
     	};
     	
+    	// Authority allows abc@def.org
         String validChars = ALPHABET_CHARS + NUMERIC_CHARS;
-        String invalidChars = "~!@#$%^&*()_+";
+        String invalidChars = "~!#$%^&*()_+";
 
         String host = generateString(length, validRatio, validChars, invalidChars);
         boolean hostValid = host.matches("^[A-Za-z0-9]+[A-Za-z0-9.]*(?<![.])$");
 
-        //String domain = generateString(3, validRatio, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
         int randomNum = new Random().nextInt(tldList.length);
         String domain = tldList[randomNum].item;
         boolean domainValid = tldList[randomNum].valid;
@@ -202,10 +201,17 @@ public class UrlValidatorTestRandom extends TestCase {
         String invalidChars = ".";
         String path = "/" + generateString(length, validRatio, validChars, invalidChars);
         
-        // If path doesn't contain '//' or '..' it passes
+        // If path doesn't contain '//' or '/..' it passes
         boolean valid = !path.matches("(.*)\\/\\/(.*)");
-        valid &= !path.matches("(.*)\\.\\.(.*)");
-
+        if(path.contains("/..")) {
+        	if(path.length() == 3) {
+        		valid = false;
+        	}
+        	else {
+        		valid &= true;
+        	}
+        }
+        
         return new ResultPair(path, valid);
     }
 
@@ -309,7 +315,10 @@ public class UrlValidatorTestRandom extends TestCase {
     {
     	Random rand = new Random();
     	int size = 25;
-    	double validRatio = 0.95;
+    	double validRatio = 0.90;
+    	long options = UrlValidator.ALLOW_ALL_SCHEMES;
+		UrlValidator urlVal = new UrlValidator(null, null, options);
+    	
     	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> ports = new ArrayList<ResultPair>();
@@ -322,10 +331,6 @@ public class UrlValidatorTestRandom extends TestCase {
     		paths.add(generatePath(rand.nextInt(30), validRatio));
     		queries.add(generateQuery(rand.nextInt(30), validRatio));
     	}
-    	
-    	long options = UrlValidator.ALLOW_ALL_SCHEMES;
-		
-		UrlValidator urlVal = new UrlValidator(null, null, options);
     	
     	for(ResultPair scheme: schemes) {
     		for(ResultPair authority: authorities) {
@@ -342,5 +347,18 @@ public class UrlValidatorTestRandom extends TestCase {
     			}
     		}
     	}
+		
+		for(int i=0; i< 10 * 1000 * 1000; i++) {
+    		ResultPair scheme = generateScheme(rand.nextInt(6), validRatio);
+    		ResultPair authority = generateAuthority(rand.nextInt(20), validRatio);
+    		ResultPair port = generatePort(rand.nextInt(5), validRatio);
+    		ResultPair path = generatePath(rand.nextInt(30), validRatio);
+    		ResultPair query = generateQuery(rand.nextInt(30), validRatio);
+    		String url = scheme.item + authority.item + port.item + path.item + query.item;
+    		boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+    		boolean resultValid = urlVal.isValid(url);
+    		String message = url + " isValid is " + resultValid + " we expected " + valid;
+    		assertEquals(message, valid, resultValid);
+		}
     }
 }
