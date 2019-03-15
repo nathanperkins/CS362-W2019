@@ -159,12 +159,12 @@ public class UrlValidatorTestRandom extends TestCase {
     	String port = generateString(length, validRatio, validChars, invalidChars);
     	int portNumber;
     	try {
-    		portNumber = Integer.parseInt(port);
-    		if(portNumber >= 0 && portNumber < 65535) {
-    			// trim leading 0
-    			return new ResultPair(":" + String.valueOf(portNumber), true);
-    		}
-    	}
+            portNumber = Integer.parseInt(port);
+            if (portNumber >= 0 && portNumber < 65536) {
+                // trim leading 0
+                return new ResultPair(":" + String.valueOf(portNumber), true);
+            }
+        }
 		catch (NumberFormatException e) { }
     	
     	return new ResultPair(":" + port, false);
