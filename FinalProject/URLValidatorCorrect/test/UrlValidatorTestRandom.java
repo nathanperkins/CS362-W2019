@@ -203,8 +203,13 @@ public class UrlValidatorTestRandom extends TestCase {
         
         // If path doesn't contain '//' or '/..' it passes
         boolean valid = !path.matches("(.*)\\/\\/(.*)");
+        
+        // This is slow
         if(path.contains("/..")) {
         	if(path.length() == 3) {
+        		valid = false;
+        	}
+        	else if(path.contains("/../")) {
         		valid = false;
         	}
         	else {
@@ -319,34 +324,34 @@ public class UrlValidatorTestRandom extends TestCase {
     	long options = UrlValidator.ALLOW_ALL_SCHEMES;
 		UrlValidator urlVal = new UrlValidator(null, null, options);
     	
-    	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
-    	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
-    	ArrayList<ResultPair> ports = new ArrayList<ResultPair>();
-    	ArrayList<ResultPair> paths = new ArrayList<ResultPair>();
-    	ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
-    	for(int i=0; i < size; i++) {
-    		schemes.add(generateScheme(rand.nextInt(6), validRatio));
-    		authorities.add(generateAuthority(rand.nextInt(20), validRatio));
-    		ports.add(generatePort(rand.nextInt(5), validRatio));
-    		paths.add(generatePath(rand.nextInt(30), validRatio));
-    		queries.add(generateQuery(rand.nextInt(30), validRatio));
-    	}
-    	
-    	for(ResultPair scheme: schemes) {
-    		for(ResultPair authority: authorities) {
-    			for(ResultPair port: ports) {
-	    			for(ResultPair path: paths) {
-	    				for(ResultPair query: queries) {
-	    					String url = scheme.item + authority.item + port.item + path.item + query.item;
-	    					boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
-	    					boolean resultValid = urlVal.isValid(url);
-                            String message = url + " isValid is " + resultValid + " we expected " + valid;
-	    					assertEquals(message, valid, urlVal.isValid(url));
-	    				}
-	    			}
-    			}
-    		}
-    	}
+//    	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
+//    	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
+//    	ArrayList<ResultPair> ports = new ArrayList<ResultPair>();
+//    	ArrayList<ResultPair> paths = new ArrayList<ResultPair>();
+//    	ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
+//    	for(int i=0; i < size; i++) {
+//    		schemes.add(generateScheme(rand.nextInt(6), validRatio));
+//    		authorities.add(generateAuthority(rand.nextInt(20), validRatio));
+//    		ports.add(generatePort(rand.nextInt(5), validRatio));
+//    		paths.add(generatePath(rand.nextInt(30), validRatio));
+//    		queries.add(generateQuery(rand.nextInt(30), validRatio));
+//    	}
+//    	
+//    	for(ResultPair scheme: schemes) {
+//    		for(ResultPair authority: authorities) {
+//    			for(ResultPair port: ports) {
+//	    			for(ResultPair path: paths) {
+//	    				for(ResultPair query: queries) {
+//	    					String url = scheme.item + authority.item + port.item + path.item + query.item;
+//	    					boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+//	    					boolean resultValid = urlVal.isValid(url);
+//                            String message = url + " isValid is " + resultValid + " we expected " + valid;
+//	    					assertEquals(message, valid, urlVal.isValid(url));
+//	    				}
+//	    			}
+//    			}
+//    		}
+//    	}
 		
 		for(int i=0; i< 10 * 1000 * 1000; i++) {
     		ResultPair scheme = generateScheme(rand.nextInt(6), validRatio);
