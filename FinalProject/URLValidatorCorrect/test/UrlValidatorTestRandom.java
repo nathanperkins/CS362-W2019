@@ -161,7 +161,8 @@ public class UrlValidatorTestRandom extends TestCase {
     	try {
     		portNumber = Integer.parseInt(port);
     		if(portNumber >= 0 && portNumber < 65535) {
-    			return new ResultPair(":" + port, true);
+    			// trim leading 0
+    			return new ResultPair(":" + String.valueOf(portNumber), true);
     		}
     	}
 		catch (NumberFormatException e) { }
@@ -339,10 +340,11 @@ public class UrlValidatorTestRandom extends TestCase {
 	    					valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
 	    					boolean resultValid = urlVal.isValid(url);
 	    					if(valid != resultValid) {
-	        					String message = url + " isValid is " + resultValid + " we expected " + valid + "\n" +
-	    					"scheme " + scheme.item + ", authority " + authority.item + ", port " + port.item +
-	    					", path " + path.item + ", query " + query.item + "\n" +
-	    					scheme.valid + " " + authority.valid + " " + port.valid + " " + path.valid + " " + query.valid;
+//	        					String message = url + " isValid is " + resultValid + " we expected " + valid + "\n" +
+//	    					"scheme " + scheme.item + ", authority " + authority.item + ", port " + port.item +
+//	    					", path " + path.item + ", query " + query.item + "\n" +
+//	    					scheme.valid + " " + authority.valid + " " + port.valid + " " + path.valid + " " + query.valid;
+	        					String message = url + " isValid is " + resultValid + " we expected " + valid;
 	        					System.out.println(message);
 	    					}
 	    					//softAssertEquals(message, valid, urlVal.isValid(url));
