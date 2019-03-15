@@ -10,13 +10,13 @@ import java.util.ArrayList;
 // Again, it is up to you to use this file or not!
 
 
-public class UrlValidatorTestProject extends TestCase {
+public class UrlValidatorTestRandom extends TestCase {
     static final String LOWER_CASE_CHARS = "abcdefghijklmnopqrstuvwxyz";
     static final String UPPER_CASE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static final String ALPHABET_CHARS   = LOWER_CASE_CHARS + UPPER_CASE_CHARS;
     static final String NUMERIC_CHARS = "0123456789";
 
-    public UrlValidatorTestProject(String testName) {
+    public UrlValidatorTestRandom(String testName) {
         super(testName);
     }
 
@@ -180,7 +180,7 @@ public class UrlValidatorTestProject extends TestCase {
     query       = *( pchar / "/" / "?" )
     */
     {
-
+        return new ResultPair("", true);
     }
 
     public void testRandomValid()
