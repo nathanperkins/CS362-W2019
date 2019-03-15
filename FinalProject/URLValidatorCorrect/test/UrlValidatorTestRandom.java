@@ -92,11 +92,14 @@ public class UrlValidatorTestRandom extends TestCase {
     */
 
     {
+    	if(length == 0) {
+    		return new ResultPair("://", false);
+    	}
         String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS + "+-.";
         String invalidChars   = "~!@#$%^&*()_";
 
         String item = generateString(length, validRatio, validChars, invalidChars) + "://";
-        boolean valid = item == "" || item.matches("^[A-z]+[A-z0-9+\\-.]*://$");
+        boolean valid = !item.equals("://") || item.matches("^[A-z]+[A-z0-9+\\-.]*://$");
 
         return new ResultPair(item, valid);
     }
@@ -158,12 +161,18 @@ public class UrlValidatorTestRandom extends TestCase {
     path-empty    = 0<pchar>
     */
     {
-        String validChars = ALPHABET_CHARS + NUMERIC_CHARS + "/";
+    	if(length == 0) {
+    		return new ResultPair("", true);
+    	}
+        String validChars = ALPHABET_CHARS + NUMERIC_CHARS + "////////.........";
+        String invalidChars = ".";
+        String path = "/" + generateString(length, validRatio, validChars, invalidChars);
+        
+        // If path doesn't contain '//' or '..' it passes
+        boolean valid = !path.matches("(.*)\\/\\/(.*)");
+        valid &= !path.matches("(.*)\\.\\.(.*)");
 
-        String item = "";
-        boolean valid = true;
-
-        return new ResultPair(item, valid);
+        return new ResultPair(path, valid);
     }
 
     private static ResultPair generateQuery(int length, double validRatio)
@@ -180,7 +189,14 @@ public class UrlValidatorTestRandom extends TestCase {
     query       = *( pchar / "/" / "?" )
     */
     {
-        return new ResultPair("", true);
+    	if(length == 0) {
+    		return new ResultPair("", true);
+    	}
+    	
+    	String invalidChars = "#";
+    	String randomQuery = "?" + generateString(length, validRatio, ALPHABET_CHARS + NUMERIC_CHARS + "&=+", invalidChars);
+
+        return new ResultPair(randomQuery, true);
     }
 
     public void testRandomValid()
@@ -208,7 +224,7 @@ public class UrlValidatorTestRandom extends TestCase {
         for (int i = 0; i < 1000; i++)
         {
             ResultPair authority = generateAuthority(20, 0.95);
-            System.out.println(authority.item + authority.valid);
+            //System.out.println(authority.item + authority.valid);
         }
     }
 
@@ -225,7 +241,12 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for random generated URLs that are valid except for the path.
     */
     {
-
+        //ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
+        for (int i = 0; i < 1000; i++)
+        {
+            ResultPair path = generatePath(new Random().nextInt(30), 0.95);
+            //System.out.println(path.item + " should be " + path.valid);
+        }
     }
 
     public void testRandomInvalidQuery()
@@ -233,14 +254,62 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for random generated URLs that are valid except for the query.
     */
     {
-
+        //ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
+        for (int i = 0; i < 1000; i++)
+        {
+            ResultPair query = generateQuery(new Random().nextInt(30), 0.95);
+            //System.out.println(query.item + " should be " + query.valid);
+        }
     }
+    
+	boolean softAssertEquals(String message, boolean expected, boolean actual) {
+		if(expected == actual) {
+			//System.out.println("PASS: " + message);
+			return true;
+		}
+		//System.out.println("FAIL: " + message);
+		return false;
+	}
 
     public void testRandomAll()
     /*
     Tests for fully random generated URLs that may be fully valid, or may have one or more components invalid.
     */
     {
-
+    	int size = 10;
+    	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
+    	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
+    	ArrayList<ResultPair> paths = new ArrayList<ResultPair>();
+    	ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
+    	for(int i=0; i < size; i++) {
+    		schemes.add(generateScheme(new Random().nextInt(6), 0.95));
+    		authorities.add(generateAuthority(new Random().nextInt(20), 0.95));
+    		paths.add(generatePath(new Random().nextInt(30), 0.95));
+    		queries.add(generateQuery(new Random().nextInt(30), 0.95));
+    	}
+    	
+    	long options =
+                UrlValidator.ALLOW_2_SLASHES
+                + UrlValidator.ALLOW_ALL_SCHEMES;
+		
+		UrlValidator urlVal = new UrlValidator(null, null, options);
+    	
+    	for(ResultPair scheme: schemes) {
+    		boolean valid = true;
+    		for(ResultPair authority: authorities) {
+    			for(ResultPair path: paths) {
+    				for(ResultPair query: queries) {
+    					String url = scheme.item + authority.item + path.item + query.item;
+    					valid = scheme.valid && authority.valid && path.valid && query.valid;
+    					boolean resultValid = urlVal.isValid(url);
+    					if(valid != resultValid) {
+        					String message = url + " is " + resultValid + " expected " + valid ;
+        					System.out.println(message);
+    					}
+    					//softAssertEquals(message, valid, urlVal.isValid(url));
+    				}
+    			}
+    		}
+    	}
     }
 }
