@@ -100,7 +100,7 @@ public class UrlValidatorTestRandom extends TestCase {
         String invalidChars   = "~!@#$%^&*()_+-.";
 
         String item = generateString(length, validRatio, validChars, invalidChars) + "://";
-        boolean valid = !item.equals("://") || item.matches("^[A-z]+[A-z0-9+\\-.]*://$");
+        boolean valid = !item.equals("://") || item.matches("^[A-Za-z]+[A-Za-z0-9+\\-.]*://$");
 
         return new ResultPair(item, valid);
     }
@@ -137,7 +137,7 @@ public class UrlValidatorTestRandom extends TestCase {
         String invalidChars = "~!@#$%^&*()_+";
 
         String host = generateString(length, validRatio, validChars, invalidChars);
-        boolean hostValid = host.matches("^[A-z]+[A-z0-9.]*[A-z0-9]$");
+        boolean hostValid = host.matches("^[A-Za-z0-9]+[A-Za-z0-9.]*[A-Za-z0-9]$");
 
         //String domain = generateString(3, validRatio, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
         int randomNum = new Random().nextInt(tldList.length);
@@ -238,7 +238,6 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for random generated URLs that are all valid.
     */
     {
-
     }
 
     public void testRandomInvalidScheme()
@@ -246,7 +245,6 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for random generated URLs that are valid except for the scheme.
     */
     {
-
     }
 
     public void testRandomInvalidAuthority()
@@ -267,7 +265,6 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for random generated URLs that are valid except for the port.
     */
     {
-
     }
 
     public void testRandomInvalidPath()
@@ -331,13 +328,12 @@ public class UrlValidatorTestRandom extends TestCase {
 		UrlValidator urlVal = new UrlValidator(null, null, options);
     	
     	for(ResultPair scheme: schemes) {
-    		boolean valid = true;
     		for(ResultPair authority: authorities) {
     			for(ResultPair port: ports) {
 	    			for(ResultPair path: paths) {
 	    				for(ResultPair query: queries) {
 	    					String url = scheme.item + authority.item + port.item + path.item + query.item;
-	    					valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+	    					boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
 	    					boolean resultValid = urlVal.isValid(url);
 	    					if(valid != resultValid) {
 //	        					String message = url + " isValid is " + resultValid + " we expected " + valid + "\n" +
