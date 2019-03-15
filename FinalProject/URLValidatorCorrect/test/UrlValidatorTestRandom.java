@@ -122,18 +122,50 @@ public class UrlValidatorTestRandom extends TestCase {
     authority   = [ userinfo "@" ] host [ ":" port ]
     */
     {
+    	ResultPair[] tldList = {
+    		new ResultPair("com", true),
+    		new ResultPair("org", true),
+    		new ResultPair("net", true),
+    		//new ResultPair("gov", true),
+    		new ResultPair("dummy", false),
+    		new ResultPair("invalid", false),
+    		new ResultPair("asdf", false),
+    	};
+    	
         String validChars = ALPHABET_CHARS + NUMERIC_CHARS;
         String invalidChars = "~!@#$%^&*()_+";
 
         String host = generateString(length, validRatio, validChars, invalidChars);
         boolean hostValid = host.matches("^[A-z]+[A-z0-9.]*[A-z0-9]$");
 
-        String domain = generateString(3, validRatio, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
-        boolean domainValid = domain.matches("^[A-z]+$");
+        //String domain = generateString(3, validRatio, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
+        int randomNum = new Random().nextInt(tldList.length);
+        String domain = tldList[randomNum].item;
+        boolean domainValid = tldList[randomNum].valid;
 
         String item = host + "." + domain;
         boolean valid = hostValid && domainValid;
         return new ResultPair(item, valid);
+    }
+    
+    private static ResultPair generatePort(int length, double validRatio) {
+    	if(length == 0) {
+    		return new ResultPair("", true);
+    	}
+    	String validChars = NUMERIC_CHARS;
+    	String invalidChars = ALPHABET_CHARS;
+    	
+    	String port = generateString(length, validRatio, validChars, invalidChars);
+    	int portNumber;
+    	try {
+    		portNumber = Integer.parseInt(port);
+    		if(portNumber >= 0 && portNumber < 65535) {
+    			return new ResultPair(":" + port, true);
+    		}
+    	}
+		catch (NumberFormatException e) { }
+    	
+    	return new ResultPair(":" + port, false);
     }
 
     private static ResultPair generatePath(int length, double validRatio)
@@ -164,7 +196,7 @@ public class UrlValidatorTestRandom extends TestCase {
     	if(length == 0) {
     		return new ResultPair("", true);
     	}
-        String validChars = ALPHABET_CHARS + NUMERIC_CHARS + "////////.........";
+        String validChars = ALPHABET_CHARS + NUMERIC_CHARS + "/";
         String invalidChars = ".";
         String path = "/" + generateString(length, validRatio, validChars, invalidChars);
         
@@ -276,16 +308,20 @@ public class UrlValidatorTestRandom extends TestCase {
     Tests for fully random generated URLs that may be fully valid, or may have one or more components invalid.
     */
     {
+    	Random rand = new Random();
     	int size = 10;
+    	double validRatio = 0.95;
     	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
+    	ArrayList<ResultPair> ports = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> paths = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> queries = new ArrayList<ResultPair>();
     	for(int i=0; i < size; i++) {
-    		schemes.add(generateScheme(new Random().nextInt(6), 0.95));
-    		authorities.add(generateAuthority(new Random().nextInt(20), 0.95));
-    		paths.add(generatePath(new Random().nextInt(30), 0.95));
-    		queries.add(generateQuery(new Random().nextInt(30), 0.95));
+    		schemes.add(generateScheme(rand.nextInt(6), validRatio));
+    		authorities.add(generateAuthority(rand.nextInt(20), validRatio));
+    		ports.add(generatePort(rand.nextInt(5), validRatio));
+    		paths.add(generatePath(rand.nextInt(30), validRatio));
+    		queries.add(generateQuery(rand.nextInt(30), validRatio));
     	}
     	
     	long options =
@@ -297,17 +333,22 @@ public class UrlValidatorTestRandom extends TestCase {
     	for(ResultPair scheme: schemes) {
     		boolean valid = true;
     		for(ResultPair authority: authorities) {
-    			for(ResultPair path: paths) {
-    				for(ResultPair query: queries) {
-    					String url = scheme.item + authority.item + path.item + query.item;
-    					valid = scheme.valid && authority.valid && path.valid && query.valid;
-    					boolean resultValid = urlVal.isValid(url);
-    					if(valid != resultValid) {
-        					String message = url + " is " + resultValid + " expected " + valid ;
-        					System.out.println(message);
-    					}
-    					//softAssertEquals(message, valid, urlVal.isValid(url));
-    				}
+    			for(ResultPair port: ports) {
+	    			for(ResultPair path: paths) {
+	    				for(ResultPair query: queries) {
+	    					String url = scheme.item + authority.item + port.item + path.item + query.item;
+	    					valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+	    					boolean resultValid = urlVal.isValid(url);
+	    					if(valid != resultValid) {
+	        					String message = url + " isValid is " + resultValid + " we expected " + valid + "\n" +
+	    					"scheme " + scheme.item + ", authority " + authority.item + ", port " + port.item +
+	    					", path " + path.item + ", query " + query.item + "\n" +
+	    					scheme.valid + " " + authority.valid + " " + port.valid + " " + path.valid + " " + query.valid;
+	        					System.out.println(message);
+	    					}
+	    					//softAssertEquals(message, valid, urlVal.isValid(url));
+	    				}
+	    			}
     			}
     		}
     	}
