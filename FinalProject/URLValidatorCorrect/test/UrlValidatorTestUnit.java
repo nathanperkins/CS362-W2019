@@ -32,8 +32,11 @@ public class UrlValidatorTestUnit extends TestCase {
 				new ResultPair("https://twitter.com/allinkid/status/1077417707526590464", true),
 				new ResultPair("ftp://example.com", true),
 				new ResultPair("http://www.example.com:8080/foo/bar", true),
-				new ResultPair("http://www.example.com?foo=BaR", true),
+				new ResultPair("http://www.example.com:adsf/foo/bar", false),
+				new ResultPair("http://www.example.com:65536/foo/bar", false),
+				new ResultPair("http://www.example.net?foo=BaR", true),
 				new ResultPair("http://www.example.com/foo bar", false),
+				new ResultPair("http://www.example.gov:8080//foo//bar", false),
 				new ResultPair("http://www.yahoos/com", false),
 				new ResultPair("http://yahoo/com", false),
 				new ResultPair("http://www/yahoo/com", false),
@@ -47,7 +50,9 @@ public class UrlValidatorTestUnit extends TestCase {
 		UrlValidator urlVal = new UrlValidator(null, null, options);
 		boolean result = true;
 		
+		int i = 0;
 		for (ResultPair item : testUrls) {
+			i += 1;
 			String message = item.item + " should be " + item.valid;
 			try {
 				if(!softAssertEquals(message, item.valid, urlVal.isValid(item.item))) {
@@ -60,7 +65,7 @@ public class UrlValidatorTestUnit extends TestCase {
 			}
 		}
     	
-    	System.out.println("Unit tests one passed: " + result);
+    	System.out.println("Unit tests one, " + String.valueOf(i) + " test cases, passed: " + result);
     	assertTrue(result);
     }
     
@@ -121,17 +126,17 @@ public class UrlValidatorTestUnit extends TestCase {
 		
 		UrlValidator urlVal = new UrlValidator(null, null, options);
     	
-    	boolean urlValid;
     	boolean finalResult = true;
     	
+    	int i = 0;
     	for(ResultPair scheme: schemes) {
-    		urlValid = true;
     		for(ResultPair domain: domains) {
         		for(ResultPair port: ports) {
             		for(ResultPair path: paths) {
                 		for(ResultPair queryString: queryStrings) {
+                			i += 1;
                 			String url = scheme.item + domain.item + port.item + path.item + queryString.item;
-                			urlValid = scheme.valid && domain.valid && port.valid && path.valid && queryString.valid;
+                			boolean urlValid = scheme.valid && domain.valid && port.valid && path.valid && queryString.valid;
                 			String message = url + " should be " + urlValid;
                 			try {
                 				if(!softAssertEquals(message, urlValid, urlVal.isValid(url))) {
@@ -148,7 +153,8 @@ public class UrlValidatorTestUnit extends TestCase {
     		}
     	}
     	
-    	System.out.println("Unit tests two passed: " + finalResult);
+    	System.out.println("Unit tests two, " + String.valueOf(i) + " test cases, passed: " + finalResult);
     	assertTrue(finalResult);
     }
 }
+
