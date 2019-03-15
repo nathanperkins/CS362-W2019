@@ -308,7 +308,7 @@ public class UrlValidatorTestRandom extends TestCase {
     */
     {
     	Random rand = new Random();
-    	int size = 10;
+    	int size = 25;
     	double validRatio = 0.95;
     	ArrayList<ResultPair> schemes = new ArrayList<ResultPair>();
     	ArrayList<ResultPair> authorities = new ArrayList<ResultPair>();
@@ -335,15 +335,8 @@ public class UrlValidatorTestRandom extends TestCase {
 	    					String url = scheme.item + authority.item + port.item + path.item + query.item;
 	    					boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
 	    					boolean resultValid = urlVal.isValid(url);
-	    					if(valid != resultValid) {
-//	        					String message = url + " isValid is " + resultValid + " we expected " + valid + "\n" +
-//	    					"scheme " + scheme.item + ", authority " + authority.item + ", port " + port.item +
-//	    					", path " + path.item + ", query " + query.item + "\n" +
-//	    					scheme.valid + " " + authority.valid + " " + port.valid + " " + path.valid + " " + query.valid;
-	        					String message = url + " isValid is " + resultValid + " we expected " + valid;
-	        					System.out.println(message);
-	    					}
-	    					//softAssertEquals(message, valid, urlVal.isValid(url));
+                            String message = url + " isValid is " + resultValid + " we expected " + valid;
+	    					assertEquals(message, valid, urlVal.isValid(url));
 	    				}
 	    			}
     			}
