@@ -95,8 +95,9 @@ public class UrlValidatorTestRandom extends TestCase {
     	if(length == 0) {
     		return new ResultPair("://", false);
     	}
-        String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS + "+-.";
-        String invalidChars   = "~!@#$%^&*()_";
+        //String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS + "+-.";
+    	String validChars     = LOWER_CASE_CHARS + UPPER_CASE_CHARS + NUMERIC_CHARS;
+        String invalidChars   = "~!@#$%^&*()_+-.";
 
         String item = generateString(length, validRatio, validChars, invalidChars) + "://";
         boolean valid = !item.equals("://") || item.matches("^[A-z]+[A-z0-9+\\-.]*://$");
@@ -324,9 +325,7 @@ public class UrlValidatorTestRandom extends TestCase {
     		queries.add(generateQuery(rand.nextInt(30), validRatio));
     	}
     	
-    	long options =
-                UrlValidator.ALLOW_2_SLASHES
-                + UrlValidator.ALLOW_ALL_SCHEMES;
+    	long options = UrlValidator.ALLOW_ALL_SCHEMES;
 		
 		UrlValidator urlVal = new UrlValidator(null, null, options);
     	
