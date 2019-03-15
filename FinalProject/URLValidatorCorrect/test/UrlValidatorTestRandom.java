@@ -137,7 +137,7 @@ public class UrlValidatorTestRandom extends TestCase {
         String invalidChars = "~!@#$%^&*()_+";
 
         String host = generateString(length, validRatio, validChars, invalidChars);
-        boolean hostValid = host.matches("^[A-Za-z0-9]+[A-Za-z0-9.]*[A-Za-z0-9]$");
+        boolean hostValid = host.matches("^[A-Za-z0-9]+[A-Za-z0-9.]*(?<![.])$");
 
         //String domain = generateString(3, validRatio, ALPHABET_CHARS, NUMERIC_CHARS + invalidChars);
         int randomNum = new Random().nextInt(tldList.length);
