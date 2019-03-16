@@ -231,7 +231,7 @@ public class UrlValidatorTestRandom extends TestCase {
     	long options = UrlValidator.ALLOW_ALL_SCHEMES;
 		UrlValidator urlVal = new UrlValidator(null, null, options);
 
-		for(int i = 0; i < 10_000_000; i++) {
+		for(int i = 0; i < 1_000_000; i++) {
     		ResultPair scheme = generateScheme(rand.nextInt(6), validRatio);
     		ResultPair authority = generateAuthority(rand.nextInt(20), validRatio);
     		ResultPair port = generatePort(rand.nextInt(5), validRatio);
@@ -245,5 +245,7 @@ public class UrlValidatorTestRandom extends TestCase {
     		String message = url + " isValid is " + resultValid + " we expected " + valid;
     		assertEquals(message, resultValid, valid);
 		}
+
+		System.out.println("UrlValidatorTestRandom.testRandomAll() passed.");
     }
 }
