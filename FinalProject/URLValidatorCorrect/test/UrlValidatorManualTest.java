@@ -1,23 +1,11 @@
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.*;
+import junit.framework.TestCase;
 
-import java.util.HashMap;
-import java.util.Map;
+public class UrlValidatorManualTest extends TestCase {
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-class UrlValidatorManualTest {
-
-	@BeforeEach
-	void setUp() throws Exception {
+	public UrlValidatorManualTest(String testName) {
+		super(testName);
 	}
 
-	@AfterEach
-	void tearDown() throws Exception {
-	}
-	
 	boolean softAssertEquals(String message, boolean expected, boolean actual) {
 		if(expected == actual) {
 			System.out.println("PASS: " + message);
@@ -27,8 +15,7 @@ class UrlValidatorManualTest {
 		return false;
 	}
 
-	@Test
-	void testIsValid() {
+	public void testIsValid() {
 
 		//long options = UrlValidator.ALLOW_ALL_SCHEMES;
 		
@@ -45,14 +32,15 @@ class UrlValidatorManualTest {
 				new ResultPair("ftp://example.com", true),
 				new ResultPair("http://www.example.com:8080/foo/bar", true),
 				new ResultPair("http://www.example.com?foo=BaR", true),
-				new ResultPair("http://www.example.com/foo bar", true),
-				new ResultPair("http://www.yahoo/com", false),
-				new ResultPair("http://yahoo/com", false),
-				new ResultPair("http://www/yahoo/com", false),
-				new ResultPair("htp://www.yahoo.com", false),
-				new ResultPair("http://www.yahoo.com::", false),
-				new ResultPair("http://www.yahoo.com:://", false),
-				new ResultPair("http://sports.yahoo.com::/nba", false)
+				new ResultPair("http://www.example.com/foo%20bar", true),
+				new ResultPair("htp://www.askjeeves.com", true),
+                new ResultPair("https://www.askjeeves/", false),
+				new ResultPair("http://www.askjeeves/com", false),
+				new ResultPair("http://askjeeves/com", false),
+				new ResultPair("http://www/askjeeves/com", false),
+				new ResultPair("http://www.askjeeves.com::", false),
+				new ResultPair("http://www.askjeeves.com:://", false),
+				new ResultPair("http://sports.askjeeves.com::/nba", false)
 		};
 		
 		// 1. ftp, https, htp fails
@@ -60,26 +48,15 @@ class UrlValidatorManualTest {
 		// 3. authority should allow port, checks for ":" and returns false
 		// 4. ResultPair.valid is equal to !valid
 		
-		boolean result = true;
-
 		for (ResultPair item : testUrls) {
-			String message = item.item + " should be " + !item.valid;
-			try {
-				boolean expected = !item.valid;
-				boolean actual = urlVal.isValid(item.item);
-				result = softAssertEquals(message, expected, actual);
-			}
-			catch (Error e) {
-				System.out.println("ERROR: " + message);
-				result = false;
-			}
+			boolean expected = item.valid;
+			boolean actual = urlVal.isValid(item.item);
+			String message = "isValid() returned " + actual + " for " + item.item + " when we expected " + item.valid + ".";
+
+			assertEquals(message, expected, actual);
 		}
 		
-		System.out.println("Finished tests.");
-		
-		if(!result) {
-			fail("Tests failed.");
-		}
+		System.out.println("UrlValidatorManualTest.testIsValid() passed.");
 	}
 
 }
