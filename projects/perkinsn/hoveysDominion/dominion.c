@@ -605,7 +605,7 @@ int adventurerEffect(struct gameState *state, int currentPlayer, int drawntreasu
     	}
     	drawCard(currentPlayer, state);
     	//bug introduced: removed the '-1', this makes it such that the card on the top card in the hand is not the most recently drawn card 
-    	cardDrawn = state->hand[currentPlayer][state->handCount[currentPlayer]];//top card of hand is most recently drawn card.
+    	cardDrawn = state->hand[currentPlayer][state->handCount[currentPlayer] - 1];//top card of hand is most recently drawn card.
     	if (cardDrawn == copper || cardDrawn == silver || cardDrawn == gold)
     	  drawntreasure++;
     	else{
