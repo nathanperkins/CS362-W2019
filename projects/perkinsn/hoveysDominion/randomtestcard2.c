@@ -1,111 +1,85 @@
-/**********************************************
- * Assignment 4
- * Sara Hovey
- * CS 362 
- * Winter 2019
- * gcc -o randomtestcard2 randomtestcard2.c -g dominion.o rngs.o -Wall -fpic -coverage -lm -std=c99
-***********************************************/
-
-#include "dominion.h"
-#include "dominion_helpers.h"
-#include <string.h>
 #include <stdio.h>
-#include <assert.h>
-#include "rngs.h"
-#include <stdlib.h>
-#include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/param.h>
 
-int main() {
+#include "test_helpers.h"
+#include "dominion.h"
 
-    int isPassed = 1;
-    struct gameState Game, copyOfGame;
+int main()
+/*
+test card great hall
 
-	int numberOfTests = 100;
-    int handPosition = 0;
-    int firstChoice = 0, secondChoice = 0, thirdChoice = 0;
-    int bonus = 0;
-	int currentPlayer;
-	int addedCards = 3;
-	int discard = 1;
-	
-	char bee[] = "\U0001F41D";
-    char angery[] = "\U0001F608";
-	
-	int i, handPos, returnValue;
-	int totalCards, copytotalCards;
+http://wiki.dominionstrategy.com/index.php/Great_Hall
 
++1 Card
++1 Action
 
-	// Seed random with time
-	srand(time(NULL));
+*/
+{
+    srand(time(NULL));
 
+    printf("Testing card: great hall\n\n");
 
-    printf("\n**********************Testing Smithy******************\n");
+    struct gameState state;
 
+    for (int i = 0; i < 1000; ++i)
+    {
+        memset(&state, 0, sizeof(struct gameState));
+        state.numPlayers = 1 + rand() % MAX_PLAYERS;
+        state.numActions = 1 + rand();
+        state.numBuys    = 1 + rand(); 
+        state.whoseTurn  = rand() % MAX_PLAYERS;
+        state.phase      = 0;
 
-	// Populate the struct holding the game state with random numbers 
-	for (i = 0; i < numberOfTests; i++){
-		for (handPos = 0; handPos < sizeof(struct gameState)/ sizeof(int); handPos++) {
-			((int*)&Game)[handPos] = rand() % 128;
-		}
+        for (int player = 0; player < state.numPlayers; ++player)
+        {
+            int numDeck = 1 + rand() % MAX_DECK;
+            int numHand = 1 + rand() % MAX_HAND - 3;
+            int numDiscard = 1 + rand() % MAX_DECK - 1;
 
-		// Here we make sure that the parts of the game state that we will be accessing
-        // are populated with valid input
-		Game.numPlayers = (rand() % 3)+2;
-		Game.whoseTurn = rand() % Game.numPlayers;
-		currentPlayer = whoseTurn(&Game);
-		
-		Game.handCount[currentPlayer] = (rand() % (MAX_HAND/2))+1;
-		Game.deckCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-		Game.discardCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-		
-		handPosition = (rand() % Game.handCount[currentPlayer]);
-
-		// Make a copy of the game state struct such that we can
-        // compare the original state to changes made via tested functions
-		memcpy(&copyOfGame, &Game, sizeof(struct gameState));
-
-        //Since my function is int and not void, we can test return value here
-		returnValue = cardEffect(smithy, firstChoice, secondChoice, thirdChoice, &copyOfGame, handPosition, &bonus);
-		if (returnValue != 0) {
-			isPassed = 0;
-			printf("%s TEST FAILED on return value %s\n", angery, angery);
-		}
-		else{
-            printf("%s TEST PASSED on return value %s\n", bee, bee);
+            fillDeck(player, &state, numDeck);
+            fillHand(player, &state, numHand);
+            fillDiscard(player, &state, numDiscard);
         }
 
-		// Test number of cards in the hand
-		if (copyOfGame.handCount[currentPlayer] != Game.handCount[currentPlayer]+addedCards-discard){
-			isPassed = 0;
-			printf("%s TEST FAILED on hand count %s\n", angery, angery);
-		}
-		else{
-            printf("%s TEST PASSED on hand count %s\n", bee, bee);
+        int player = state.whoseTurn;
+        int greatHallIndex = -1;
+
+        for (int i = 0; i < state.handCount[player]; ++i)
+        {
+            if (state.hand[player][i] == great_hall) {
+                greatHallIndex = i;
+                break;
+            }
         }
-		
-		printf("Hand Count: %d, Expected: %d \n\n", copyOfGame.handCount[currentPlayer], Game.handCount[currentPlayer]+addedCards-discard);
 
-
-		// Test number of cards in deck and discard pile
-		totalCards = Game.deckCount[currentPlayer] + Game.discardCount[currentPlayer];
-		copytotalCards = copyOfGame.deckCount[currentPlayer] + copyOfGame.discardCount[currentPlayer];
-		if (copytotalCards != totalCards - addedCards) {
-			isPassed = 0;
-			printf("%s TEST FAILED on total card count %s\n", angery, angery);
-		}
-		else{
-            printf("%s TEST PASSED on total card count %s\n", bee, bee);
+        if (greatHallIndex == -1) {
+            // greatHall not in hand, cannot be played
+            continue;
         }
-		printf("Actual total cards: %d, Expected total cards: %d \n\n", copytotalCards, totalCards-addedCards);
 
+        // smithy was found!
+        int numDrawnCards   = MIN(1, state.deckCount[player]);
+        int handCountBefore = state.handCount[player];
+        int deckCountBefore = state.deckCount[player];
+        int discardCountBefore = state.discardCount[player];
+        int playedCardCountBefore = state.playedCardCount;
+        int actionsBefore   = state.numActions; 
+
+        // printf("numDrawnCards: %d\n", numDrawnCards);
+        // debugGameState(player, &state);
+        playCard(greatHallIndex, -1, -1, -1, &state);
+        // debugGameState(player, &state);
+
+        assert_true_with_state(player, state, state.deckCount[player] == deckCountBefore - numDrawnCards);
+        assert_true_with_state(player, state, state.handCount[player] == handCountBefore + numDrawnCards - 1);
+        assert_true_with_state(player, state, state.discardCount[player] == discardCountBefore);
+        assert_true_with_state(player, state, state.playedCardCount == playedCardCountBefore + 1);
+        assert_true_with_state(player, state, state.numActions == actionsBefore);
     }
 
-
-    //If the tests have not already failed, return true!
-    if(isPassed){
-        printf("%s ALL TESTS PASSED %s\n", bee, bee);
-    }
-
-    return 0;
-};
+    printf("\n great hall done.\n\n");
+}

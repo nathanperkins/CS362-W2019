@@ -1,161 +1,105 @@
-/**********************************************
- * Assignment 4
- * Sara Hovey
- * CS 362 
- * Winter 2019
- * gcc -o randomtestadventurer randomtestadventurer.c -g dominion.o rngs.o -Wall -fpic -coverage -lm -std=c99
-***********************************************/
-#include "dominion.h"
-#include "dominion_helpers.h"
-#include <string.h>
 #include <stdio.h>
-#include <assert.h>
-#include "rngs.h"
-#include <stdlib.h>
-#include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/param.h>
 
-int main() {
+#include "test_helpers.h"
+#include "dominion.h"
 
-    int isPassed = 1;
-    struct gameState Game, copyOfGame;
+int main()
+/*
+test card adventurer
 
-    int numberOfTests = 100;
-    int handPosition = 0;
-    int firstChoice = 0, secondChoice = 0, thirdChoice = 0;
-    int bonus = 0;
-    int currentPlayer;
-    int addedCards = 2;
-    
-    int treasure, copytreasure;
-    int i, handPos, r, returnValue;
-    int totalCards, copytotalCards;
-    
-    char bee[] = "\U0001F41D";
-    char angery[] = "\U0001F608";
-    
-    // Seed random with time
+http://wiki.dominionstrategy.com/index.php/Adventurer
+
+Reveal cards from your deck until you reveal 2 Treasure cards. 
+Put those Treasure cards into your hand and discard the other revealed cards.
+*/
+{
     srand(time(NULL));
 
+    printf("Testing card: great hall\n\n");
 
-    printf("\n**********************Testing Adventurer******************\n");
+    struct gameState state;
 
-    // Populate the struct holding the game state with random numbers 
-    for (i = 0; i < numberOfTests; i++){
-        for (handPos = 0; handPos < sizeof(struct gameState)/ sizeof(int); handPos++) {
-            ((int*)&Game)[handPos] = rand() % 128;
+    for (int i = 0; i < 1000; ++i)
+    {
+        memset(&state, 0, sizeof(struct gameState));
+        state.numPlayers = 1 + rand() % MAX_PLAYERS;
+        state.numActions = 1 + rand();
+        state.numBuys    = 1 + rand(); 
+        state.whoseTurn  = rand() % MAX_PLAYERS;
+        state.phase      = 0;
+
+        for (int player = 0; player < state.numPlayers; ++player)
+        {
+            int numDeck = 1 + rand() % MAX_DECK;
+            int numHand = 1 + rand() % MAX_HAND - 3;
+            int numDiscard = 1 + rand() % MAX_DECK - 1;
+
+            fillDeck(player, &state, numDeck);
+            fillHand(player, &state, numHand);
+            fillDiscard(player, &state, numDiscard);
         }
 
-        // Here we make sure that the parts of the game state that we will be accessing
-        // are populated with valid input
-        Game.numPlayers = (rand() % 3)+2;
-        Game.whoseTurn = rand() % Game.numPlayers;
-        currentPlayer = whoseTurn(&Game);
-        
-        Game.handCount[currentPlayer] = (rand() % (MAX_HAND/2))+1;
-        Game.deckCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-        Game.discardCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-        handPosition = (rand() % Game.handCount[currentPlayer]);
-        
-        // Randomly assign some treasure and estates to the player's hand
-        for (handPos = 0; handPos < Game.handCount[currentPlayer]; handPos++) {
-            r = (rand() % 2);
-            if (r == 0) {
-                Game.hand[currentPlayer][handPos] = copper;
-            } else {
-                Game.hand[currentPlayer][handPos] = estate;
-            }
-        }
-        
-        // Same to their deck
-        for (handPos = 0; handPos < Game.deckCount[currentPlayer]; handPos++) {
-            r = (rand() % 2);
-            if (r == 0) {
-                Game.deck[currentPlayer][handPos] = copper;
-            } 
-            else {
-                Game.deck[currentPlayer][handPos] = estate;
+        int player = state.whoseTurn;
+        int adventurerIndex = -1;
+
+        for (int i = 0; i < state.handCount[player]; ++i)
+        {
+            if (state.hand[player][i] == adventurer) {
+                adventurerIndex = i;
+                break;
             }
         }
 
-        // Make a copy of the game state struct such that we can
-        // compare the original state to changes made via tested functions
-        memcpy(&copyOfGame, &Game, sizeof(struct gameState));
-
-        // Since my function is int and not void, we can test return value here
-        returnValue = cardEffect(adventurer, firstChoice, secondChoice, thirdChoice, &copyOfGame, handPosition, &bonus);
-        
-        if (returnValue != 0) {
-            //Expecting a 0 to indicate nothing went wrong
-            isPassed = 0;
-            printf("%s TEST FAILED on return value %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on return value %s\n", bee, bee);
+        if (adventurerIndex == -1) {
+            // greatHall not in hand, cannot be played
+            continue;
         }
 
-        // Test the count of cards in the hand
-        if (copyOfGame.handCount[currentPlayer] != Game.handCount[currentPlayer]+addedCards){
-            isPassed = 0;
-            printf("Actual hand count: %d, Expected hand count: %d \n\n", copyOfGame.handCount[currentPlayer], Game.handCount[currentPlayer]+addedCards);
-        }
+        // adventurer was found
+        int playedCardCountBefore = state.playedCardCount;
+        int actionsBefore   = state.numActions; 
 
-        // Test the count of the deck and discard pile
-        totalCards = Game.deckCount[currentPlayer] + Game.discardCount[currentPlayer];
-        copytotalCards = copyOfGame.deckCount[currentPlayer] + copyOfGame.discardCount[currentPlayer];
-        if (copytotalCards != totalCards - addedCards) {
-            isPassed = 0;
-            printf("%s TEST FAILED on total card count %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on total card count %s\n", bee, bee);
-        }
-        printf("Actual cards: %d, Expected cards: %d \n\n", copytotalCards, totalCards-addedCards);
+        int handCopperBefore = countCards(copper, state.hand[player], state.handCount[player]);
+        int handSilverBefore = countCards(silver, state.hand[player], state.handCount[player]);
+        int handGoldBefore = countCards(gold, state.hand[player], state.handCount[player]);
 
-        // Test amount of treasure
-        treasure = 0;
-        handPos = 0;
-        while (handPos < numHandCards(&Game)) {
-            if (handCard(handPos, &Game) == copper) {
-                treasure++;
-            } 
-            else if (handCard(handPos, &Game) == silver) {
-                treasure += 2;
-            } 
-            else if (handCard(handPos, &Game) == gold) {
-                treasure += 3;
-            }
-            handPos++;
-        }
+        int deckCopperBefore = countCards(copper, state.deck[player], state.deckCount[player]);
+        int deckSilverBefore = countCards(silver, state.deck[player], state.deckCount[player]);
+        int deckGoldBefore = countCards(gold, state.deck[player], state.deckCount[player]);
 
-        copytreasure = 0;
-        handPos = 0;
-        while (handPos < numHandCards(&copyOfGame)) {
-            if (handCard(handPos, &copyOfGame) == copper) {
-                copytreasure++;
-            } 
-            else if (handCard(handPos, &copyOfGame) == silver) {
-                copytreasure += 2;
-            } 
-            else if (handCard(handPos, &copyOfGame) == gold) {
-                copytreasure += 3;
-            }
-            handPos++;
-        };
-        if (copytreasure < treasure+2) {
-            isPassed = 0;
-            printf("%s TEST FAILED treasure count %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on treasure count %s\n", bee, bee);
-        }
-        printf("Actual treasure: %d, Expected treasure: >= %d \n\n", copytreasure, treasure+2);
-    }
-    
-    //If the tests have not already failed, return true!
-    if(isPassed){
-        printf("%s ALL TESTS PASSED %s\n", bee, bee);
+        int discardCopperBefore = countCards(copper, state.discard[player], state.discardCount[player]);
+        int discardSilverBefore = countCards(silver, state.discard[player], state.discardCount[player]);
+        int discardGoldBefore = countCards(gold, state.discard[player], state.discardCount[player]);
+
+        // printf("numDrawnCards: %d\n", numDrawnCards);
+        // debugGameState(player, &state);
+        playCard(adventurerIndex, -1, -1, -1, &state);
+        // debugGameState(player, &state);
+
+        int handCopperAfter = countCards(copper, state.hand[player], state.handCount[player]);
+        int handSilverAfter = countCards(silver, state.hand[player], state.handCount[player]);
+        int handGoldAfter = countCards(gold, state.hand[player], state.handCount[player]);
+
+        int deckCopperAfter = countCards(copper, state.deck[player], state.deckCount[player]);
+        int deckSilverAfter = countCards(silver, state.deck[player], state.deckCount[player]);
+        int deckGoldAfter = countCards(gold, state.deck[player], state.deckCount[player]);
+
+        int discardCopperAfter = countCards(copper, state.discard[player], state.discardCount[player]);
+        int discardSilverAfter = countCards(silver, state.discard[player], state.discardCount[player]);
+        int discardGoldAfter = countCards(gold, state.discard[player], state.discardCount[player]); 
+
+        assert_true_with_state(player, state, state.playedCardCount == playedCardCountBefore);
+        assert_true_with_state(player, state, state.numActions == actionsBefore - 1);
+
+        assert_true_with_state(player, state, handCopperAfter == handCopperBefore + (deckCopperBefore - deckCopperAfter) + (discardCopperBefore - discardCopperAfter));
+        assert_true_with_state(player, state, handSilverAfter == handSilverBefore + (deckSilverBefore - deckSilverAfter) + (discardSilverBefore - discardSilverAfter));
+        assert_true_with_state(player, state, handGoldAfter == handGoldBefore + (deckGoldBefore - deckGoldAfter) + (discardGoldBefore - discardGoldAfter));
     }
 
-    return 0;
-};
+    printf("\n adventurer done.\n\n");
+}

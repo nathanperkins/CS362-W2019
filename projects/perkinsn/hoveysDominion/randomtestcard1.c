@@ -1,145 +1,90 @@
-/**********************************************
- * Assignment 4
- * Sara Hovey
- * CS 362 
- * Winter 2019
- * gcc -o randomtestcard1 randomtestcard1.c -g dominion.o rngs.o -Wall -fpic -coverage -lm -std=c99
-***********************************************/
-
-#include "dominion.h"
-#include "dominion_helpers.h"
-#include <string.h>
 #include <stdio.h>
-#include <assert.h>
-#include "rngs.h"
-#include <stdlib.h>
-#include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include <sys/param.h>
 
-int main() {
+#include "test_helpers.h"
+#include "dominion.h"
 
-    int isPassed = 1;
-    int numberOfTests = 50;
-    int handPosition = 0;
-    int firstChoice = 0, secondChoice = 0, thirdChoice = 0;
-    int bonus = 0;
-    int currentPlayer;
-    int addedCards = 4;
-    int discard = 1;
-    int addedBuys = 1;
-    int otherPlrAdded = 1;
-    int playerHand[4];
-    int copyPlayerHand[4];
-    
-    char bee[] = "\U0001F41D";
-    char angery[] = "\U0001F608";
-    
-    struct gameState Game, copyOfGame;
-    int i, handPos, returnValue;
-	int totalCards, copytotalCards;
+int main()
+/*
+test card smithy
 
-    // Seed random with time
+http://wiki.dominionstrategy.com/index.php/Smithy
+
+You draw 3 cards.
+
+playSmithy(&state, handPos)
+
+Important calls:
+state->whoseTurn;
+drawCard(currentPlayer, state);
+discardCard(handPost, currentPlayer, state, 0);
+*/
+{
     srand(time(NULL));
 
+    printf("Testing card: smithy\n\n");
 
-    printf("\n**********************Testing Çouncil Room******************\n");
+    struct gameState state;
 
-    // Populate the struct holding the game state with random numbers 
-    for (i = 0; i < numberOfTests; i++){
-        for (handPos = 0; handPos < sizeof(struct gameState)/ sizeof(int); handPos++) {
-            ((int*)&Game)[handPos] = rand() % 128;
+    for (int i = 0; i < 1000; ++i)
+    {
+        memset(&state, 0, sizeof(struct gameState));
+        state.numPlayers = 1 + rand() % MAX_PLAYERS;
+        state.numActions = 1 + rand();
+        state.numBuys    = 1 + rand(); 
+        state.whoseTurn  = rand() % MAX_PLAYERS;
+        state.phase      = 0;
+
+        for (int player = 0; player < state.numPlayers; ++player)
+        {
+            int numDeck = 1 + rand() % MAX_DECK;
+            int numHand = 1 + rand() % MAX_HAND - 3;
+            int numDiscard = 1 + rand() % MAX_DECK - 1;
+
+            fillDeck(player, &state, numDeck);
+            fillHand(player, &state, numHand);
+            fillDiscard(player, &state, numDiscard);
         }
 
-        // Here we make sure that the parts of the game state that we will be accessing
-        // are populated with valid input
-        Game.numPlayers = (rand() % 3)+2;
-        Game.whoseTurn = rand() % Game.numPlayers;
-        currentPlayer = whoseTurn(&Game);
-        
-        Game.handCount[currentPlayer] = (rand() % (MAX_HAND/2))+1;
-        Game.deckCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-        Game.discardCount[currentPlayer] = (rand() % (MAX_DECK/2))+1;
-        
-        Game.numBuys = 0;
-        handPosition = (rand() % Game.handCount[currentPlayer]);
+        int player = state.whoseTurn;
+        int smithyIndex = -1;
 
-
-        // Make a copy of the game state struct such that we can
-        // compare the original state to changes made via tested functions
-        memcpy(&copyOfGame, &Game, sizeof(struct gameState));
-
-        //Since my function is int and not void, we can test return value here
-        returnValue = cardEffect(council_room, firstChoice, secondChoice, thirdChoice, &copyOfGame, handPosition, &bonus);
-        
-        //Expecting a 0 to indicate nothing went wrong
-        if (returnValue != 0) {
-            isPassed = 0;
-            printf("%s TEST FAILED on return value %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on return value %s\n", bee, bee);
-        }
-
-        // Test number of cards in the hand
-        if (copyOfGame.handCount[currentPlayer] != Game.handCount[currentPlayer]+addedCards-discard){
-            isPassed = 0;
-            printf("%s TEST FAILED on count of cards in hand %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on count of cards in hand %s\n", bee, bee);
-        }
-        printf("Actual hand count: %d, Expected hand count: %d \n\n", copyOfGame.handCount[currentPlayer], Game.handCount[currentPlayer]+addedCards-discard);
-
-		// Test number of cards in deck and discard pile
-        totalCards = Game.deckCount[currentPlayer] + Game.discardCount[currentPlayer];
-		copytotalCards = copyOfGame.deckCount[currentPlayer] + copyOfGame.discardCount[currentPlayer];
-		if (copytotalCards != totalCards - addedCards) {
-			isPassed = 0;
-            printf("%s TEST FAILED on total card count %s\n", angery, angery);
-		}
-		else{
-            printf("%s TEST PASSED on total card count %s\n", bee, bee);
-        }
-		printf("Actual total cards: %d, Expected total cards: %d \n\n", copytotalCards, totalCards-addedCards);
-
-        // Test number of buy actions the player has 
-        if (copyOfGame.numBuys != Game.numBuys + addedBuys) {
-            isPassed = 0;
-            printf("%s TEST FAILED on count of cards in hand %s\n", angery, angery);
-        }
-        else{
-            printf("%s TEST PASSED on buy count %s\n", bee, bee);
-        }
-        printf("Actual buys: %d, Expected buys: %d \n\n", copyOfGame.numBuys, Game.numBuys+addedBuys);
-        
-        for (handPos = 0; handPos < Game.numPlayers; handPos++) {
-            if (handPos != currentPlayer) {
-                copyPlayerHand[handPos] = copyOfGame.handCount[handPos];
-                playerHand[handPos] = Game.handCount[handPos];
+        for (int i = 0; i < state.handCount[player]; ++i)
+        {
+            if (state.hand[player][i] == smithy) {
+                smithyIndex = i;
+                break;
             }
         }
 
-        //test the other players hand count
-        for (handPos = 0; handPos < Game.numPlayers; handPos++) {
-            if (handPos != currentPlayer) {
-                if (copyPlayerHand[handPos] != playerHand[handPos] + otherPlrAdded) {
-                    isPassed = 0;
-                    printf("%s TEST FAILED on count of other player's hand %s\n", angery, angery);
-                }
-                else{
-                    printf("%s TEST PASSED on count of other player's hand %s\n", bee, bee);
-                }
-			    printf("Actual count of other hand:: %d, Expected count of other hand: %d \n\n", copyPlayerHand[handPos],  playerHand[handPos] + otherPlrAdded);
-            }
+        if (smithyIndex == -1) {
+            // smithy not in hand, cannot be played
+            continue;
         }
-    
+
+        // smithy was found!
+        int numDrawnCards   = MIN(3, state.deckCount[player]);
+        int handCountBefore = state.handCount[player];
+        int deckCountBefore = state.deckCount[player];
+        int discardCountBefore = state.discardCount[player];
+        int playedCardCountBefore = state.playedCardCount;
+        int actionsBefore   = state.numActions; 
+
+        // printf("numDrawnCards: %d\n", numDrawnCards);
+        // debugGameState(player, &state);
+        playCard(smithyIndex, -1, -1, -1, &state);
+        // debugGameState(player, &state);
+
+        assert_true_with_state(player, state, state.deckCount[player] == deckCountBefore - numDrawnCards);
+        assert_true_with_state(player, state, state.handCount[player] == handCountBefore + numDrawnCards - 1);
+        assert_true_with_state(player, state, state.discardCount[player] == discardCountBefore);
+        assert_true_with_state(player, state, state.playedCardCount == playedCardCountBefore + 1);
+        assert_true_with_state(player, state, state.numActions == actionsBefore - 1);
     }
 
-
-    //If the tests have not already failed, return true!
-    if(isPassed){
-        printf("%s ALL TESTS PASSED %s\n", bee, bee);
-    }
-
-    return 0;
-};
+    printf("\nsmithy tests done.\n\n");
+}
