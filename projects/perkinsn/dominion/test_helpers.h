@@ -9,6 +9,8 @@
 
 #include "dominion.h"
 
+#define LAST_CARD treasure_map
+
 // macro for quickly testing a bool value
 // from https://piazza.com/class/jpu18p346423vs?cid=159
 #define asserttrue(bool) if(bool) { printf("TEST SUCCESSFULLY COMPLETED.\n"); } else { printf("TEST FAILED: '" #bool  "' on line %d.\n", __LINE__); };
