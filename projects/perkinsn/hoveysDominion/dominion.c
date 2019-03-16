@@ -766,9 +766,11 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
   switch( card ){
     case adventurer:
         adventurerEffect(state, currentPlayer, drawntreasure, cardDrawn, z, temphand);
+        break;
 			
     case council_room:
       councilRoomEffect(state, currentPlayer, handPos);
+      break;
 			
     case feast:
       //gain card with cost up to 5
@@ -826,6 +828,7 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
 			
     case gardens:
       gardensEffect();
+      break;
 			
     case mine:
       j = state->hand[currentPlayer][choice1];  //store card we will trash
@@ -890,6 +893,7 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
 		
     case smithy:
       smithyEffect(currentPlayer, state, handPos );
+      break;
 		
     case village:
       //+1 Card
