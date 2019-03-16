@@ -49,25 +49,24 @@ unittestresults: $(UNITTESTS) $(CARDTESTS) $(OBJS) $(SRCS)
 	./cardtest3 >> unittestresults.out
 	./cardtest4 >> unittestresults.out
 	$(GCOV) dominion.c -bf >> unittestresults.out
-	$(GCOV) cards.c -bf >> unittestresults.out
 
 .PHONY: randomtestresults randomtestcard1.out randomtestcard2.out randomtestadventurer
 randomtestresults: randomtestcard1.out randomtestcard2.out randomtestadventurer.out
 
 randomtestcard1.out: randomtestcard1
-	rm -f cards.gcda
+	rm -f dominion.gcda
 	./$^ > $@
-	$(GCOV) cards.c -bf >> $@
+	$(GCOV) dominion.c -bf >> $@
 
 randomtestcard2.out: randomtestcard2
-	rm -f cards.gcda
+	rm -f dominion.gcda
 	./$^ > $@
-	$(GCOV) cards.c -bf >> $@
+	$(GCOV) dominion.c -bf >> $@
 
 randomtestadventurer.out: randomtestadventurer
-	rm -f cards.gcda
+	rm -f dominion.gcda
 	./$^ > $@
-	$(GCOV) cards.c -bf >> $@
+	$(GCOV) dominion.c -bf >> $@
 
 .PHONY: clean
 clean:
