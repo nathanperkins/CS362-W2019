@@ -221,6 +221,96 @@ public class UrlValidatorTestRandom extends TestCase {
         return new ResultPair(item, valid);
     }
 
+    public void testRandomBadScheme()
+    /*
+    Tests a random bad scheme
+    */
+    {
+        Random rand = new Random();
+        double validRatio = 1;
+        long options = UrlValidator.ALLOW_ALL_SCHEMES;
+        UrlValidator urlVal = new UrlValidator(null, null, options);
+
+        for(int i = 0; i < 100_000; i++) {
+            ResultPair scheme = generateScheme(rand.nextInt(6)+2, 0);
+            ResultPair authority = generateAuthority(rand.nextInt(20), validRatio);
+            ResultPair port = generatePort(rand.nextInt(5), validRatio);
+            ResultPair path = generatePath(rand.nextInt(30), validRatio);
+            ResultPair query = generateQuery(rand.nextInt(30), validRatio);
+
+            String url = scheme.item + authority.item + port.item + path.item + query.item;
+            boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+            String message = "testRandomBadScheme(): all URLs should be invalid - " + url;
+            assertEquals(message, valid, false);
+
+            boolean resultValid = urlVal.isValid(url);
+            message = url + " isValid is " + resultValid + " we expected " + valid;
+            assertEquals(message, resultValid, valid);
+        }
+
+        System.out.println("testRandomBadScheme() passed.");
+    }
+
+    public void testRandomBadAuthority()
+    /*
+    Tests a random bad authority
+    */
+    {
+        Random rand = new Random();
+        double validRatio = 1;
+        long options = UrlValidator.ALLOW_ALL_SCHEMES;
+        UrlValidator urlVal = new UrlValidator(null, null, options);
+
+        for(int i = 0; i < 100_000; i++) {
+            ResultPair scheme = generateScheme(rand.nextInt(6), validRatio);
+            ResultPair authority = generateAuthority(rand.nextInt(20), 0);
+            ResultPair port = generatePort(rand.nextInt(5), validRatio);
+            ResultPair path = generatePath(rand.nextInt(30), validRatio);
+            ResultPair query = generateQuery(rand.nextInt(30), validRatio);
+
+            String url = scheme.item + authority.item + port.item + path.item + query.item;
+            boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+            String message = "testRandomBadAuthority(): all URLs should be invalid - " + url;
+            assertEquals(message, valid, false);
+
+            boolean resultValid = urlVal.isValid(url);
+            message = url + " isValid is " + resultValid + " we expected " + valid;
+            assertEquals(message, resultValid, valid);
+        }
+
+        System.out.println("testRandomBadAuthority() passed.");
+    }
+
+    public void testRandomBadPort()
+    /*
+    Tests a random bad port
+    */
+    {
+        Random rand = new Random();
+        double validRatio = 1;
+        long options = UrlValidator.ALLOW_ALL_SCHEMES;
+        UrlValidator urlVal = new UrlValidator(null, null, options);
+
+        for(int i = 0; i < 100_000; i++) {
+            ResultPair scheme = generateScheme(rand.nextInt(6), validRatio);
+            ResultPair authority = generateAuthority(rand.nextInt(20), validRatio);
+            ResultPair port = generatePort(rand.nextInt(5) + 1, 0);
+            ResultPair path = generatePath(rand.nextInt(30), validRatio);
+            ResultPair query = generateQuery(rand.nextInt(30), validRatio);
+
+            String url = scheme.item + authority.item + port.item + path.item + query.item;
+            boolean valid = scheme.valid && authority.valid && port.valid && path.valid && query.valid;
+            String message = "testRandomBadPort(): all URLs should be invalid - " + url;
+            assertEquals(message, valid, false);
+
+            boolean resultValid = urlVal.isValid(url);
+            message = url + " isValid is " + resultValid + " we expected " + valid;
+            assertEquals(message, resultValid, valid);
+        }
+
+        System.out.println("testRandomBadPort() passed.");
+    }
+
     public void testRandomAll()
     /*
     Tests for fully random generated URLs that may be fully valid, or may have one or more components invalid.
