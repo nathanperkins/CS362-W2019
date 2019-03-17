@@ -253,7 +253,7 @@ public class UrlValidatorTestRandom extends TestCase {
 
     public void testRandomBadAuthority()
     /*
-    Tests a random bad scheme
+    Tests a random bad authority
     */
     {
         Random rand = new Random();
